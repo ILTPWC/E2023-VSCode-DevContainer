@@ -1,6 +1,6 @@
 {
     "name": "ILTPWC DevContainerExample",
-    "forwardPorts": [5000],
+    "forwardPorts": [80,443],
     "dockerComposeFile": "docker-compose.yml",
     "service": "iltpwc",
     "workspaceFolder": "/workspace",

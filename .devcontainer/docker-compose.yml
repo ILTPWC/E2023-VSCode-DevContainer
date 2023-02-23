@@ -1,8 +1,69 @@
 version: "2.2"
 services:
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - intranet
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./data-traefik/traefik.yml:/traefik.yml:ro
+      - ./data-traefik/acme.json:/acme.json
+      - ./data-traefik/conf.yml:/conf.yml
+    environment:
+      - DO_AUTH_TOKEN=<ADD_YOUR_AUTH_TOKEN_HERE>
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=intranet"
+      - "traefik.http.routers.traefik-secure.entrypoints=websecure"
+      - "traefik.http.routers.traefik-secure.rule=Host(`<ADD_YOUR_TRAEFIK_DOMAIN_HERE>`)"
+      - "traefik.http.routers.traefik-secure.service=api@internal"
+
+  postgres:
+    image: postgres:11-alpine
+    container_name: wikijs-db
+    networks:
+      - intranet
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ./data-postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: WelcomeToILTPWC
+      POSTGRES_USER: postgres
+    logging:
+      driver: "none"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=intranet"
+      - "traefik.tcp.routers.postgres.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.postgres.entrypoints=postgresdb"
+      - "traefik.tcp.routers.postgres.service=postgres@docker"
+      - "traefik.tcp.services.postgres.loadbalancer.server.port=5432"
+
   iltpwc:
     build: 
       context: ..
       dockerfile: .devcontainer/Dockerfile
+    container_name: iltpwc
+    networks:
+      - intranet
     volumes:
       - ..:/workspace
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=intranet"
+      - "traefik.http.routers.demo.entrypoints=websecure"
+      - "traefik.http.routers.demo.rule=Host(`<ADD_YOUR_APPLICATION_DOMAIN_HERE`)" 
+      - "traefik.http.routers.demo.service=demo"
+      - "traefik.http.services.demo.loadbalancer.server.port=5000"  
+
+networks:
+  intranet:
