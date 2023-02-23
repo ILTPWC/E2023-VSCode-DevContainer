@@ -1,0 +1,8 @@
+{
+    "name": "ILTPWC DevContainerExample",
+    "forwardPorts": [5000],
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "iltpwc",
+    "workspaceFolder": "/workspace",
+    "overrideCommand": true
+}
